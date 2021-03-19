@@ -1,0 +1,355 @@
+::::::::::::::
+ChainNode.java
+::::::::::::::
+class ChainNode<K, V> {
+    private K key;
+    private V value;
+    private ChainNode<K, V> next;
+
+    public ChainNode(K newKey, V newValue,
+                     ChainNode<K, V> nextNode) {
+        key = newKey;
+        value = newValue;
+        next = nextNode;
+    }  // end constructor
+
+    public V getValue() {
+        return value;
+    }  // end getValue
+
+    public K getKey() {
+        return key;
+    }  // end getKey
+
+    public ChainNode<K, V> getNext()
+    {
+        return next;
+    }  // end getNext
+
+    public void setNext(ChainNode<K, V> next)
+    {
+        this.next=next;
+    }  // end setNext
+
+
+} // end ChainNode
+::::::::::::::
+HashTable.java
+::::::::::::::
+// ********************************************************
+// Hash table implementation.
+// Assumption: A table contains unique items(at most one
+//             item with a given search key at any time)
+// *********************************************************
+
+public class HashTable<K, V> implements HashTableInterface<K,V>
+{
+    protected ChainNode<K,V>[] table;     // hash table
+    private int size = 0;          // size of ADT table
+
+    public HashTable()
+    {
+        table = new ChainNode[3];
+    }  // end default constructor
+
+    // table operations
+    public boolean tableIsEmpty()
+    {
+        return size==0;
+    }  // end tableIsEmpty
+
+    public int tableLength()
+    {
+        return size;
+    }  // end tableLength
+
+    @SuppressWarnings("unchecked")
+    //implement the following 4 methods
+    public void tableInsert(K key, V value) throws HashException
+    {
+        int index = hashIndex(key);
+
+        if (table[index] == null)
+        {
+            table[index] = new ChainNode<K,V>(key, value,null);
+        }
+        else
+        {
+            ChainNode<K, V> temp = new ChainNode<K,V>(key, value,table[index]);
+            ChainNode<K,V> curr = table[index];
+
+            while(curr.getKey() != key || curr != null)
+                curr = curr.getNext();
+
+            if(curr == null)
+                table[index] = temp;
+            else
+                throw new HashException("Key already in Table");
+        }
+
+        size++;
+    }
+    @SuppressWarnings({ "unchecked", "unused" })
+    public boolean tableDelete(K searchKey)
+    {
+        int index = hashIndex(searchKey);
+        ChainNode<K,V> prev = null;
+        ChainNode<K,V> curr;
+
+        for(curr = table[index]; !curr.getKey().equals(searchKey); curr = curr.getNext())
+            prev = curr;
+
+        if (curr == null)
+            return false;
+
+        if(prev == null)
+            table[index] = null;
+        size--;
+        return true;
+
+    }
+
+    @SuppressWarnings({"null","unchecked"})
+    public V tableRetrieve(K searchKey)
+    {
+        int index = hashIndex(searchKey);
+        ChainNode<K,V> curr;
+
+        for(curr = table[index]; !curr.getKey().equals(searchKey); curr = curr.getNext())
+        {
+            //iterate through nodes
+        }
+
+        return curr.getValue();
+    }
+
+    public int hashIndex(K key)
+    {
+        return x(key) % table.length;
+    }
+
+    public int x(K key)
+    {
+        int result = 0;
+        Character character;
+        Character charA = 'A';
+
+        for(int i = 2; i > -1 ; i--)
+        {
+            character = key.toString().charAt(i);
+            result += (character.charValue() - charA.charValue()) << i+5;
+        }
+
+        return result;
+    }
+
+}  // end HashTable
+
+::::::::::::::
+Main.java
+::::::::::::::
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+
+public class Main
+{
+    static BufferedReader keyboard;
+
+    public static void main(String[] args) throws IOException
+    {
+        keyboard = new BufferedReader(new InputStreamReader(System.in));
+        boolean exit = false;
+
+        Menu menu = new Menu();
+        menu.setMenu("Select from the following menu:\n"
+                     + "	1. Insert a symbol key with an associated value in the table.\n"
+                     + "	2. Delete a symbol from the table\n"
+                     + "	3. Retrieve and display the value associated with a symbol key in the table. \n"
+                     + "	4. Display the hash index of a symbol key.\n"
+                     + "	5. Exit.\n"
+                     + "Make your selection now: ");
+
+        HashTable<String, Integer> symbolTable = new HashTable<String, Integer>();
+        String key;
+
+        do
+        {
+            System.out.print(menu.getMenu());
+
+            try
+            {
+                int request = Integer.parseInt(keyboard.readLine());
+                System.out.print(request);
+                System.out.println();
+                System.out.println();
+
+                switch(request)
+                {
+                case 5:
+                    System.out.println("Your session has ended");
+                    exit = true;
+                    break;
+                case 1:
+                    System.out.println("You are now adding a new (Symbol,Value) to your Table: ");
+                    System.out.print("	Enter symbol: ");
+                    key = keyboard.readLine().trim();
+                    System.out.println(key);
+                    System.out.print("	Enter value: ");
+                    int value = Integer.parseInt(keyboard.readLine().trim());
+                    System.out.println(value);
+
+                    symbolTable.tableInsert(key, value);
+                    break;
+                case 2:
+                    if(symbolTable.tableIsEmpty())
+                    {
+                        System.out.println("You have no items in your list.");
+                    }
+                    else
+                    {
+                        System.out.println("You are now deleting a task from your Table.");
+                        System.out.print("	Enter symbol to remove from table: ");
+                        key = keyboard.readLine();
+                        System.out.print(key);
+                        System.out.println();
+
+
+                        if(symbolTable.tableDelete(key))
+                            System.out.println("Symbol " + key + " has been removed from table.");
+                        else
+                            System.out.println("Symbol " + key + " is not in table.");
+                    }
+                    break;
+                case 3:
+                    if(symbolTable.tableIsEmpty())
+                    {
+                        System.out.println("You have no items in your list.");
+                    }
+                    else
+                    {
+                        System.out.print("Enter Symbol to be retrived: ");
+                        key = keyboard.readLine().trim();
+                        System.out.print(key);
+                        System.out.println();
+
+                        System.out.print("Value " + symbolTable.tableRetrieve(key) + " found with symbol: " + key);
+
+                        System.out.println();
+                    }
+                    break;
+                case 4:
+                    if( symbolTable.tableIsEmpty())
+                    {
+                        System.out.println("You have no items in your list.");
+                    }
+                    else
+                    {
+                        System.out.print("Enter Symbol to be displayed: ");
+                        key = keyboard.readLine().trim();
+                        System.out.print(key);
+                        System.out.println();
+
+                        System.out.print("Symbol " + key + " has hash index: " + symbolTable.hashIndex(key));
+                        System.out.println();
+                    }
+                    break;
+
+                }
+            } catch(Exception e)
+            {
+                System.out.println();
+                System.out.println("Error: " + e.getMessage());
+            }
+
+            System.out.println();
+
+        } while(!exit);
+    }
+
+}
+::::::::::::::
+main.input
+::::::::::::::
+1
+TOP
+8
+3
+TOP
+4
+TOP
+2
+TOP
+3
+5
+::::::::::::::
+main.output
+::::::::::::::
+Select from the following menu:
+	1. Insert a symbol key with an associated value in the table.
+	2. Delete a symbol from the table
+	3. Retrieve and display the value associated with a symbol key in the table. 
+	4. Display the hash index of a symbol key.
+	5. Exit.
+Make your selection now: 1
+
+You are now adding a new (Symbol,Value) to your Table: 
+	Enter symbol: TOP
+	Enter value: 8
+
+Select from the following menu:
+	1. Insert a symbol key with an associated value in the table.
+	2. Delete a symbol from the table
+	3. Retrieve and display the value associated with a symbol key in the table. 
+	4. Display the hash index of a symbol key.
+	5. Exit.
+Make your selection now: 3
+
+Enter Symbol to be retrived: TOP
+Value 8 found with symbol: TOP
+
+Select from the following menu:
+	1. Insert a symbol key with an associated value in the table.
+	2. Delete a symbol from the table
+	3. Retrieve and display the value associated with a symbol key in the table. 
+	4. Display the hash index of a symbol key.
+	5. Exit.
+Make your selection now: 4
+
+Enter Symbol to be displayed: TOP
+Symbol TOP has hash index: 1
+
+Select from the following menu:
+	1. Insert a symbol key with an associated value in the table.
+	2. Delete a symbol from the table
+	3. Retrieve and display the value associated with a symbol key in the table. 
+	4. Display the hash index of a symbol key.
+	5. Exit.
+Make your selection now: 2
+
+You are now deleting a task from your Table.
+	Enter symbol to remove from table: TOP
+Symbol TOP has been removed from table.
+
+Select from the following menu:
+	1. Insert a symbol key with an associated value in the table.
+	2. Delete a symbol from the table
+	3. Retrieve and display the value associated with a symbol key in the table. 
+	4. Display the hash index of a symbol key.
+	5. Exit.
+Make your selection now: 3
+
+You have no items in your list.
+
+Select from the following menu:
+	1. Insert a symbol key with an associated value in the table.
+	2. Delete a symbol from the table
+	3. Retrieve and display the value associated with a symbol key in the table. 
+	4. Display the hash index of a symbol key.
+	5. Exit.
+Make your selection now: 5
+
+Your session has ended
+
